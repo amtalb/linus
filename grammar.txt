@@ -1,0 +1,39 @@
+program:            (expression | global_definition)* ;
+
+expression:         literal | function_call | special_expression | assignment | conditional ;
+global_definition:  'def' SYMBOL ('->' expression)? ;
+
+special_expression: 'let' SYMBOL '->' expression+
+                    | 'do' expression*
+                    | 'loop' expression*
+                    | 'try' expression*
+                    | 'catch' expression*
+                    | 'finally' expression*
+                    | 'throw' expression*
+                    ;
+
+function_call:      operator operand* ;
+operator:           expression ;
+operand:            expression ;
+
+conditional:        'if' test consequent alternative ;
+test:               expression ;
+consequent:         expression ;
+alternative:        expression? ;
+
+type:               'str' | 'num' | 'bool' | '_' ;
+
+literal:            STR | NUMBER  | BOOLEAN | NONE ;
+
+seq:                '[' expression* ']' ;
+hash:               '{' (expression: expression)* '}' ;  
+
+SYMBOL:             initial subsequent* ;
+
+initial:            '[A-z]' ;
+subsequent:         '[A-z0-9!\%\&\*\<\=\>\?\_\^\+\-] ;
+
+STR:                '"' ( ~('\n'|'"') )* '"' ;
+NUMBER:             '0'..'9'+ ('.' '0'..'9'+)? ;
+NONE:               'none' ;
+BOOLEAN:            'true' | 'false' ;

@@ -9,3 +9,4 @@ edition = "2021"
 lexer = { path = "../lexer" }
 parser = { path = "../parser" }
 interpreter = { path = "../interpreter" }
+environment = { path = "../environment" }

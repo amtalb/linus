@@ -4,7 +4,7 @@ use std::cell::Cell;
 #[derive(Debug)]
 pub enum Expr {
     Assignment {
-        name: Token,
+        name: String,
         type_decl: String,
         expr: Box<Expr>,
     },
@@ -66,36 +66,41 @@ impl<'a> Parser<'a> {
             Some(&Token::Def) => {
                 // advance past def
                 self.advance();
-                // match on variable name, type delimiter ':', type, and assignment symbol '->'
-                match (self.advance(), self.advance(), self.advance(), self.peek()) {
-                    (
-                        Some(token),
-                        Some(&Token::TypeDelim),
-                        Some(&Token::TypeDecl(ref type_declaration)),
-                        Some(&Token::Assign),
-                    ) => {
-                        // advance past assignment symbol
-                        self.advance();
-                        // match on expression following assignment symbol
-                        match (self.expression()?, self.peek()) {
-                            (e, Some(&Token::Indent))
-                            | (e, Some(&Token::LeftParen))
-                            | (e, Some(&Token::Appl)) 
-                            | (e, Some(&Token::Newline)) 
-                            | (e, Some(&Token::EOF)) => {
+                // match on variable name
+                match self.advance() {
+                    Some(Token::Symbol(token)) => {
+                        // match on type delimiter ':', type, and assignment symbol '->'
+                        match (self.advance(), self.advance(), self.peek()) {
+                            (
+                                Some(&Token::TypeDelim),
+                                Some(&Token::TypeDecl(ref type_declaration)),
+                                Some(&Token::Assign)
+                            ) => {
+                                // advance past assignment symbol
                                 self.advance();
-                                Ok(Expr::Assignment {
-                                    name: token.clone(),
-                                    type_decl: type_declaration.clone(),
-                                    expr: Box::new(e),
-                                })
-                            }
-                            _ => Err("Error in global variable declaration: no expression following variable declaration."),
+                                // match on expression following assignment symbol
+                                match (self.expression()?, self.peek()) {
+                                    (e, Some(&Token::Indent))
+                                    | (e, Some(&Token::LeftParen))
+                                    | (e, Some(&Token::Appl)) 
+                                    | (e, Some(&Token::Newline)) 
+                                    | (e, Some(&Token::EOF)) => {
+                                        self.advance();
+                                        Ok(Expr::Assignment {
+                                            name: token.clone(),
+                                            type_decl: type_declaration.clone(),
+                                            expr: Box::new(e),
+                                        })
+                                    }
+                                    _ => Err("Error in global variable declaration: no expression following variable declaration."),
+                                }
+                            },
+                            _ => Err("Error in global variable declaration: invalid syntax after \"def\""),
                         }
-                    }
-                    _ => Err("Error in global variable declaration: invalid syntax after \"def\""),
+                    },
+                    _ => Err("Invalid variable name."),
                 }
-            }
+            },
             _ => self.special_expression(),
         }
     }
@@ -254,12 +259,7 @@ pub fn ast_pretty_print(expr: &Expr) {
         Expr::Assignment { name, type_decl, expr } => {
             print!("( ");
             print!("def ");
-            match name {
-                Token::Symbol(sym) => {
-                    print!("{}: {} ", &sym, type_decl)
-                }
-                _ => panic!("Invalid variable name."),
-            }
+            print!("{}: {} ", name, type_decl);
             ast_pretty_print(expr);
             print!(") ");
         }

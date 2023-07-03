@@ -23,9 +23,5 @@ fn main() {
         process::exit(1)
     });
 
-    // for expr in ast {
-    //     parser::ast_pretty_print(&expr);
-    // }
-
     interpreter::interpret(&ast);
 }
